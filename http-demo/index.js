@@ -1,22 +1,18 @@
 const express = require("express");
 const app = express();
-app.use(express.json()); // để đọc JSON body
+app.use(express.json()); 
 
-// In-memory "database"
 let users = [
   { id: 1, name: "Hieu", email: "hieu@example.com" },
   { id: 2, name: "Kien", email: "kien@example.com" },
 ];
 
-// --------- Middleware demo headers / logging ----------
 app.use((req, res, next) => {
   res.set("X-Powered-By", "REST-Demo");
   next();
 });
 
-// --------- GET: lấy danh sách users ----------
 app.get("/users", (req, res) => {
-  // Cache 30s để demo header Cache-Control
   res.set("Cache-Control", "public, max-age=30");
   res.status(200).json({
     data: users,
@@ -24,18 +20,15 @@ app.get("/users", (req, res) => {
   });
 });
 
-// --------- GET: lấy 1 user theo id ----------
 app.get("/users/:id", (req, res) => {
   const id = Number(req.params.id);
   const u = users.find((x) => x.id === id);
   if (!u) {
     return res.status(404).json({ error: "User not found" });
   }
-  // Demo ETag: Express tự set ETag nếu bật etag (mặc định true)
   res.status(200).json(u);
 });
 
-// --------- POST: tạo mới user ----------
 app.post("/users", (req, res) => {
   const { name, email } = req.body || {};
   if (!name || !email) {
@@ -45,12 +38,10 @@ app.post("/users", (req, res) => {
   const newUser = { id, name, email };
   users.push(newUser);
 
-  // Location header trỏ đến resource mới
   res.set("Location", `/users/${id}`);
   res.status(201).json(newUser);
 });
 
-// --------- PUT: thay thế toàn bộ resource ----------
 app.put("/users/:id", (req, res) => {
   const id = Number(req.params.id);
   const { name, email } = req.body || {};
@@ -67,7 +58,6 @@ app.put("/users/:id", (req, res) => {
   res.status(200).json(users[idx]);
 });
 
-// --------- PATCH: cập nhật một phần (ví dụ: email) ----------
 app.patch("/users/:id", (req, res) => {
   const id = Number(req.params.id);
   const idx = users.findIndex((u) => u.id === id);
@@ -80,7 +70,6 @@ app.patch("/users/:id", (req, res) => {
   res.status(200).json(users[idx]);
 });
 
-// --------- DELETE: xóa user ----------
 app.delete("/users/:id", (req, res) => {
   const id = Number(req.params.id);
   const before = users.length;
@@ -88,22 +77,18 @@ app.delete("/users/:id", (req, res) => {
   if (users.length === before) {
     return res.status(404).json({ error: "User not found" });
   }
-  // 204 No Content: xóa thành công không trả body
   res.status(204).send();
 });
 
-// --------- Lỗi mẫu để phân tích status codes ----------
 app.get("/_demo/500", (req, res) => {
   res.status(500).json({ error: "Internal Server Error (demo)" });
 });
 
 app.get("/_demo/429", (req, res) => {
-  // Retry-After để client biết bao lâu thử lại
   res.set("Retry-After", "30"); // giây
   res.status(429).json({ error: "Too Many Requests (demo)" });
 });
 
-// 404 cho các route không tồn tại
 app.use((req, res) => {
   res.status(404).json({ error: "Not Found" });
 });
